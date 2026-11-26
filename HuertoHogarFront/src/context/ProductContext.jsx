@@ -1,16 +1,16 @@
 /* eslint-disable react-refresh/only-export-components */
-import { createContext, useState, useEffect, useMemo, useCallback } from 'react';
+import { createContext, useState, useEffect, useMemo, useCallback, useContext } from 'react';
+import { AuthContext } from './AuthContext';
 
 export const ProductContext = createContext();
 
-// URL de API en Spring Boot
-const API_URL = 'http://localhost:8080/api/productos';
+const API_URL = 'http://localhost:8080/api/v1/productos';
 
 export const ProductProvider = ({ children }) => {
+  const { authHeader } = useContext(AuthContext);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Obtener productos desde la API en Spring Boot
   useEffect(() => {
     fetch(API_URL)
       .then((res) => {
@@ -27,12 +27,11 @@ export const ProductProvider = ({ children }) => {
       });
   }, []);
 
-  // Agregar producto a la BD
   const addProduct = useCallback(async (product) => {
     try {
       const res = await fetch(API_URL, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify(product),
       });
       if (res.ok) {
@@ -42,14 +41,13 @@ export const ProductProvider = ({ children }) => {
     } catch (error) {
       console.error('Error al guardar producto:', error);
     }
-  }, []);
+  }, [authHeader]);
 
-  // Actualizar producto en la BD
   const updateProduct = useCallback(async (id, updatedProduct) => {
     try {
       const res = await fetch(`${API_URL}/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
         body: JSON.stringify(updatedProduct),
       });
       if (res.ok) {
@@ -59,13 +57,13 @@ export const ProductProvider = ({ children }) => {
     } catch (error) {
       console.error('Error al actualizar producto:', error);
     }
-  }, []);
+  }, [authHeader]);
 
-  // Eliminar producto en la BD
   const deleteProduct = useCallback(async (id) => {
     try {
       const res = await fetch(`${API_URL}/${id}`, {
         method: 'DELETE',
+        headers: { ...authHeader() },
       });
       if (res.ok) {
         setProducts((prev) => prev.filter((p) => p.id !== id));
@@ -73,7 +71,7 @@ export const ProductProvider = ({ children }) => {
     } catch (error) {
       console.error('Error al eliminar producto:', error);
     }
-  }, []);
+  }, [authHeader]);
 
   const value = useMemo(
     () => ({ products, loading, addProduct, updateProduct, deleteProduct }),

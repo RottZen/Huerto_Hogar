@@ -30,13 +30,24 @@ const Navbar = () => {
                         <li className="nav-item"><Link className="nav-link" to="/catalogo" onClick={closeNav}>Catalogo</Link></li>
                         <li className="nav-item"><Link className="nav-link" to="/seguimiento" onClick={closeNav}>Seguimiento</Link></li>
                     </ul>
-                    <div className="d-flex gap-2">
+                    <div className="d-flex gap-2 align-items-center">
                         {user ? (
                            <>
                              {user.role === 'admin' ? (
-                               <Link to="/admin" className="btn btn-outline-success" onClick={closeNav}>Panel de Control</Link>
+                               <>
+                                 <span className="badge bg-danger">Administrador</span>
+                                 <Link to="/admin" className="btn btn-outline-success" onClick={closeNav}>Panel Admin</Link>
+                               </>
+                             ) : user.role === 'vendedor' ? (
+                               <>
+                                 <span className="badge bg-warning text-dark">Vendedor</span>
+                                 <Link to="/admin" className="btn btn-outline-success" onClick={closeNav}>Panel Admin</Link>
+                               </>
                              ) : (
-                               <Link to="/perfil" className="btn btn-outline-success" onClick={closeNav}>Mi Perfil</Link>
+                               <>
+                                 <span className="badge bg-secondary">Cliente</span>
+                                 <Link to="/perfil" className="btn btn-outline-success" onClick={closeNav}>Mi Perfil</Link>
+                               </>
                              )}
                              <button type="button" className="btn btn-outline-danger" onClick={() => { logout(); closeNav(); }}>Salir</button>
                            </>

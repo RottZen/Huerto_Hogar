@@ -15,7 +15,8 @@ import {
 import { AuthContext } from './context/AuthContext';
 import './App.css';
 
-const ProtectedRoute = ({ children, requireAdmin }) => {
+// Ruta que requiere estar autenticado
+const ProtectedRoute = ({ children, requireAdmin, requireVendedor }) => {
   const { user } = useContext(AuthContext);
 
   if (!user) {
@@ -23,6 +24,10 @@ const ProtectedRoute = ({ children, requireAdmin }) => {
   }
 
   if (requireAdmin && user.role !== 'admin') {
+    return <Navigate to="/" replace />;
+  }
+
+  if (requireVendedor && user.role !== 'admin' && user.role !== 'vendedor') {
     return <Navigate to="/" replace />;
   }
 
@@ -41,12 +46,19 @@ function App() {
             <Route path="/carrito" element={<Carrito />} />
             <Route path="/login" element={<Login />} />
             <Route path="/registro" element={<Registro />} />
-            <Route path="/perfil" element={<Perfil />} />
             <Route path="/seguimiento" element={<Seguimiento />} />
+            <Route
+              path="/perfil"
+              element={
+                <ProtectedRoute>
+                  <Perfil />
+                </ProtectedRoute>
+              }
+            />
             <Route
               path="/admin"
               element={
-                <ProtectedRoute requireAdmin>
+                <ProtectedRoute requireVendedor>
                   <Admin />
                 </ProtectedRoute>
               }

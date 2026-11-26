@@ -70,14 +70,14 @@ const Registro = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!validate()) {
       return;
     }
 
-    const result = register(formData.email.trim(), formData.password);
+    const result = await register(formData.name.trim(), formData.email.trim(), formData.password);
 
     if (result.success) {
       navigate('/');

@@ -3,34 +3,50 @@ import { AuthContext } from '../../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Login = () => {
-  const { login } = useContext(AuthContext);
+  const { login, register } = useContext(AuthContext);
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('login');
 
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginLoading, setLoginLoading] = useState(false);
 
   const [regName, setRegName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regConfirm, setRegConfirm] = useState('');
+  const [regError, setRegError] = useState('');
+  const [regLoading, setRegLoading] = useState(false);
 
-  const handleLoginSubmit = (e) => {
+  const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    login(loginEmail, loginPassword);
-    alert(`¡Bienvenido/a ${loginEmail}!`);
-    navigate('/');
+    setLoginError('');
+    setLoginLoading(true);
+    const result = await login(loginEmail, loginPassword);
+    setLoginLoading(false);
+    if (result.success) {
+      navigate('/');
+    } else {
+      setLoginError(result.message);
+    }
   };
 
-  const handleRegisterSubmit = (e) => {
+  const handleRegisterSubmit = async (e) => {
     e.preventDefault();
+    setRegError('');
     if (regPassword !== regConfirm) {
-      alert("Las contraseñas no coinciden.");
+      setRegError('Las contraseñas no coinciden.');
       return;
     }
-    alert("¡Registro exitoso! Iniciando sesión...");
-    login(regEmail, regPassword);
-    navigate('/');
+    setRegLoading(true);
+    const result = await register(regName, regEmail, regPassword);
+    setRegLoading(false);
+    if (result.success) {
+      navigate('/');
+    } else {
+      setRegError(result.message);
+    }
   };
 
   return (
@@ -52,6 +68,7 @@ const Login = () => {
                             {activeTab === 'login' && (
                               <div className="tab-pane fade show active" role="tabpanel">
                                   <h3 className="text-center mb-3">¡Bienvenido de vuelta!</h3>
+                                  {loginError && <div className="alert alert-danger py-2">{loginError}</div>}
                                   <form onSubmit={handleLoginSubmit}>
                                       <div className="mb-3">
                                           <label className="form-label">Correo Electrónico</label>
@@ -59,16 +76,11 @@ const Login = () => {
                                       </div>
                                       <div className="mb-3">
                                           <label className="form-label">Contraseña</label>
-                                          <input type="password" className="form-control" placeholder="••••••••" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} />
+                                          <input type="password" className="form-control" placeholder="••••••" required value={loginPassword} onChange={e => setLoginPassword(e.target.value)} />
                                       </div>
-                                      <div className="d-flex justify-content-between align-items-center mb-3">
-                                          <div className="form-check">
-                                              <input type="checkbox" className="form-check-input" id="recordarme" />
-                                              <label className="form-check-label small" htmlFor="recordarme">Recordarme</label>
-                                          </div>
-                                          <a href="#" className="small text-decoration-none text-muted">¿Olvidaste tu contraseña?</a>
-                                      </div>
-                                      <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold">Ingresar</button>
+                                      <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold" disabled={loginLoading}>
+                                        {loginLoading ? 'Iniciando sesión...' : 'Ingresar'}
+                                      </button>
                                   </form>
                               </div>
                             )}
@@ -76,6 +88,7 @@ const Login = () => {
                             {activeTab === 'registro' && (
                               <div className="tab-pane fade show active" role="tabpanel">
                                   <h3 className="text-center mb-3">Crea tu cuenta</h3>
+                                  {regError && <div className="alert alert-danger py-2">{regError}</div>}
                                   <form onSubmit={handleRegisterSubmit}>
                                       <div className="mb-3">
                                           <label className="form-label">Nombre Completo</label>
@@ -87,13 +100,15 @@ const Login = () => {
                                       </div>
                                       <div className="mb-3">
                                           <label className="form-label">Contraseña</label>
-                                          <input type="password" className="form-control" placeholder="••••••••" required value={regPassword} onChange={e => setRegPassword(e.target.value)} />
+                                          <input type="password" className="form-control" placeholder="Mínimo 6 caracteres" required value={regPassword} onChange={e => setRegPassword(e.target.value)} />
                                       </div>
                                       <div className="mb-4">
                                           <label className="form-label">Confirmar Contraseña</label>
-                                          <input type="password" className="form-control" placeholder="••••••••" required value={regConfirm} onChange={e => setRegConfirm(e.target.value)} />
+                                          <input type="password" className="form-control" placeholder="••••••" required value={regConfirm} onChange={e => setRegConfirm(e.target.value)} />
                                       </div>
-                                      <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold">Crear Cuenta</button>
+                                      <button type="submit" className="btn btn-primary w-100 py-2 fw-semibold" disabled={regLoading}>
+                                        {regLoading ? 'Creando cuenta...' : 'Crear Cuenta'}
+                                      </button>
                                   </form>
                               </div>
                             )}
