@@ -1,26 +1,5 @@
 import { useState } from 'react';
 
-const pedidosOriginales = [
-    {
-        codigo: "HH-1001",
-        estado: 1, // En Preparación
-        fechaPedido: "2026-09-01",
-        fechaEntregaEstimada: "2026-09-05"
-    },
-    {
-        codigo: "HH-1002",
-        estado: 3, // Entregado
-        fechaPedido: "2026-08-28",
-        fechaEntregaEstimada: "2026-09-02"
-    },
-    {
-        codigo: "HH-1003",
-        estado: 0, // Pedido Confirmado
-        fechaPedido: "2026-09-07",
-        fechaEntregaEstimada: "2026-09-10"
-    }
-];
-
 const ESTADOS = ["Pedido Confirmado", "En Preparación", "En Camino", "Entregado"];
 
 const formatearFecha = (fechaISO) => {
@@ -32,27 +11,38 @@ const Seguimiento = () => {
   const [codigo, setCodigo] = useState('');
   const [pedidoEncontrado, setPedidoEncontrado] = useState(null);
   const [errorBuscando, setErrorBuscando] = useState(false);
+  const [buscando, setBuscando] = useState(false);
 
-  const buscarPedido = (e) => {
+  const buscarPedido = async (e) => {
       e?.preventDefault();
       const codigoBuscado = codigo.trim().toUpperCase();
 
-      if (codigoBuscado === "") {
+      if (codigoBuscado === '') {
           setPedidoEncontrado(null);
           setErrorBuscando(false);
           return;
       }
 
-      const pedido = pedidosOriginales.find(p => p.codigo === codigoBuscado);
-
-      if (!pedido) {
-          setPedidoEncontrado(null);
-          setErrorBuscando(true);
-          return;
-      }
-
+      setBuscando(true);
       setErrorBuscando(false);
-      setPedidoEncontrado(pedido);
+      setPedidoEncontrado(null);
+
+      try {
+          const res = await fetch(`http://localhost:8082/api/v1/pedidos/${codigoBuscado}`);
+          if (res.status === 404) {
+              setErrorBuscando(true);
+              setBuscando(false);
+              return;
+          }
+          if (!res.ok) throw new Error('Error al buscar pedido');
+          const data = await res.json();
+          // data: { codigo, estado, fechaPedido, fechaEntregaEstimada, ... }
+          setErrorBuscando(false);
+          setPedidoEncontrado(data);
+      } catch {
+          setErrorBuscando(true);
+      }
+      setBuscando(false);
   };
 
   return (
@@ -73,7 +63,9 @@ const Seguimiento = () => {
                           onKeyUp={(e) => e.key === 'Enter' && buscarPedido()}
                         />
                     </div>
-                    <button id="btn-buscar-pedido" className="btn btn-success w-100" onClick={buscarPedido}>Consultar Estado</button>
+                    <button id="btn-buscar-pedido" className="btn btn-success w-100" onClick={buscarPedido} disabled={buscando}>
+                      {buscando ? 'Buscando...' : 'Consultar Estado'}
+                    </button>
                 </div>
 
                 <div id="resultado-rastreo" className="mt-4">

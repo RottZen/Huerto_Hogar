@@ -1,18 +1,55 @@
-import { useContext } from 'react';
+import { useContext, useState } from 'react';
 import { CartContext } from '../../context/CartContext';
+import { AuthContext } from '../../context/AuthContext';
 
 const Carrito = () => {
   const { cart, updateQuantity, removeFromCart, cartTotal, clearCart } = useContext(CartContext);
+  const { user, authHeader } = useContext(AuthContext);
+
+  const [ordering, setOrdering] = useState(false);
+  const [orderError, setOrderError] = useState('');
 
   const formatPrice = (value) => `$${(value || 0).toLocaleString('es-CL')}`;
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     if (cart.length === 0) {
-      alert("Tu carrito está vacío. Agrega productos antes de confirmar.");
+      alert('Tu carrito está vacío. Agrega productos antes de confirmar.');
       return;
     }
-    alert("¡Pedido confirmado! Gracias por tu compra en HuertoHogar. Puedes revisar el estado de tu pedido en tu Cuenta.");
-    clearCart();
+    if (!user) {
+      alert('Debes iniciar sesión para confirmar tu pedido.');
+      return;
+    }
+
+    setOrdering(true);
+    setOrderError('');
+
+    try {
+      const body = {
+        usuarioId: user.id,
+        items: cart.map(item => ({ productoId: item.id, quantity: item.quantity })),
+      };
+
+      const res = await fetch('http://localhost:8082/api/v1/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...authHeader() },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setOrderError(err.message || 'Error al confirmar el pedido.');
+        setOrdering(false);
+        return;
+      }
+
+      const pedido = await res.json();
+      clearCart();
+      alert(`¡Pedido confirmado! Tu código es: ${pedido.codigo}. Puedes rastrearlo en "Seguimiento de Pedido".`);
+    } catch {
+      setOrderError('No se pudo conectar con el servidor. Verifica que el backend esté activo.');
+    }
+    setOrdering(false);
   };
 
   return (
@@ -81,7 +118,10 @@ const Carrito = () => {
                     <strong>Total a pagar:</strong>
                     <strong className="fs-4 text-dark">{formatPrice(cartTotal)} CLP</strong>
                 </div>
-                <button className="btn btn-primary w-100 btn-lg" onClick={handleConfirm}>Confirmar pedido</button>
+                {orderError && <div className="alert alert-danger">{orderError}</div>}
+                <button onClick={handleConfirm} disabled={ordering} className="btn btn-primary w-100 btn-lg">
+                  {ordering ? 'Confirmando...' : 'Confirmar Pedido'}
+                </button>
             </div>
         </div>
         </div>
